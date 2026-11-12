@@ -15,31 +15,40 @@ interface LatestReleaseSectionProps {
 export function LatestReleaseSection({ items = [], genres = {} }: LatestReleaseSectionProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [hasMoved, setHasMoved] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeftState, setScrollLeftState] = useState(0);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!scrollRef.current) return;
     setIsDragging(true);
+    setHasMoved(false);
     setStartX(e.pageX - scrollRef.current.offsetLeft);
     setScrollLeftState(scrollRef.current.scrollLeft);
   };
 
-  const handleMouseLeave = () => setIsDragging(false);
-  const handleMouseUp = () => setIsDragging(false);
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging || !scrollRef.current) return;
-    e.preventDefault();
     const x = e.pageX - scrollRef.current.offsetLeft;
     const walk = (x - startX) * 1.5;
-    scrollRef.current.scrollLeft = scrollLeftState - walk;
+    if (Math.abs(x - startX) > 6) {
+      setHasMoved(true);
+      scrollRef.current.scrollLeft = scrollLeftState - walk;
+    }
   };
 
   if (!items || items.length === 0) return null;
 
   return (
-    <section id="latest" className="w-full py-8 sm:py-14 bg-black select-none border-t border-white/5">
+    <section id="latest" className="w-full py-8 sm:py-14 bg-black border-t border-white/5">
       <div className="w-full flex flex-col md:flex-row items-stretch">
         
         {/* Left Column: Signature Stacked Red Title & Drag Prompt */}
@@ -58,7 +67,7 @@ export function LatestReleaseSection({ items = [], genres = {} }: LatestReleaseS
           </div>
         </div>
 
-        {/* Right Column: Horizontally Scrollable Cards */}
+        {/* Right Column: Horizontally Scrollable Cards (supports both vertical page scroll & horizontal carousel scroll on mobile) */}
         <div className="flex-1 min-w-0 overflow-hidden pr-4 sm:pr-8 lg:pr-14 pl-4 md:pl-0">
           <div
             ref={scrollRef}
@@ -66,7 +75,7 @@ export function LatestReleaseSection({ items = [], genres = {} }: LatestReleaseS
             onMouseLeave={handleMouseLeave}
             onMouseUp={handleMouseUp}
             onMouseMove={handleMouseMove}
-            className={`flex gap-3 sm:gap-5 overflow-x-auto no-scrollbar scroll-smooth py-2 touch-pan-x ${
+            className={`flex gap-3 sm:gap-5 overflow-x-auto no-scrollbar py-2 overscroll-x-contain ${
               isDragging ? "cursor-grabbing" : "cursor-grab"
             }`}
           >
@@ -83,21 +92,28 @@ export function LatestReleaseSection({ items = [], genres = {} }: LatestReleaseS
                   key={item.id}
                   className="group relative flex-shrink-0 w-[145px] sm:w-[190px] md:w-[220px] lg:w-[240px] aspect-[2/3] rounded-lg overflow-hidden bg-zinc-900 border border-white/10 transition-transform duration-300 hover:-translate-y-1.5 shadow-xl hover:shadow-2xl hover:shadow-red-950/20"
                 >
-                  <Link href={href} className="block w-full h-full relative" draggable={false}>
+                  <Link
+                    href={href}
+                    onClick={(e) => {
+                      if (hasMoved) e.preventDefault();
+                    }}
+                    className="block w-full h-full relative"
+                    draggable={false}
+                  >
                     {/* Poster Image */}
                     <img
                       src={poster}
                       alt={title}
                       loading="lazy"
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 pointer-events-none"
                       draggable={false}
                     />
 
                     {/* Dark gradient for title legibility */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 via-40% to-transparent opacity-85 group-hover:opacity-95 transition-opacity" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 via-40% to-transparent opacity-85 group-hover:opacity-95 transition-opacity pointer-events-none" />
 
                     {/* Movie title stylized at bottom matching screenshot */}
-                    <div className="absolute inset-x-0 bottom-0 p-2.5 sm:p-4 flex flex-col justify-end">
+                    <div className="absolute inset-x-0 bottom-0 p-2.5 sm:p-4 flex flex-col justify-end pointer-events-none">
                       {firstGenre && (
                         <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-red-500 mb-0.5 sm:mb-1">
                           {firstGenre}
@@ -117,7 +133,7 @@ export function LatestReleaseSection({ items = [], genres = {} }: LatestReleaseS
                     </div>
 
                     {/* Play Button Icon on Hover */}
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30 backdrop-blur-[2px]">
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30 backdrop-blur-[2px] pointer-events-none">
                       <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-red-600/90 text-white flex items-center justify-center shadow-lg shadow-red-600/50 transform scale-75 group-hover:scale-100 transition-transform">
                         <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-white translate-x-0.5" />
                       </div>
@@ -142,4 +158,3 @@ export function LatestReleaseSection({ items = [], genres = {} }: LatestReleaseS
     </section>
   );
 }
-

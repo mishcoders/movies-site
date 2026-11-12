@@ -101,7 +101,7 @@ export function HeroSection({ items = [], genres = {} }: HeroSectionProps) {
     : "/movista.jpg";
 
   return (
-    <div className="relative w-full min-h-[580px] sm:min-h-[660px] lg:h-[88vh] lg:max-h-[920px] bg-black overflow-hidden select-none flex flex-col justify-end">
+    <div className="relative w-full min-h-[580px] sm:min-h-[660px] lg:h-[88vh] lg:max-h-[920px] bg-black overflow-hidden flex flex-col justify-end">
       {/* Background Backdrop with Cinematic Vignette */}
       <AnimatePresence mode="wait">
         <motion.div

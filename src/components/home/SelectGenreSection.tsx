@@ -65,29 +65,38 @@ const GENRE_CARDS: GenreCardData[] = [
 export function SelectGenreSection() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [hasMoved, setHasMoved] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeftState, setScrollLeftState] = useState(0);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!scrollRef.current) return;
     setIsDragging(true);
+    setHasMoved(false);
     setStartX(e.pageX - scrollRef.current.offsetLeft);
     setScrollLeftState(scrollRef.current.scrollLeft);
   };
 
-  const handleMouseLeave = () => setIsDragging(false);
-  const handleMouseUp = () => setIsDragging(false);
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging || !scrollRef.current) return;
-    e.preventDefault();
     const x = e.pageX - scrollRef.current.offsetLeft;
     const walk = (x - startX) * 1.5;
-    scrollRef.current.scrollLeft = scrollLeftState - walk;
+    if (Math.abs(x - startX) > 6) {
+      setHasMoved(true);
+      scrollRef.current.scrollLeft = scrollLeftState - walk;
+    }
   };
 
   return (
-    <section id="genres" className="w-full py-8 sm:py-14 bg-black select-none border-t border-white/5">
+    <section id="genres" className="w-full py-8 sm:py-14 bg-black border-t border-white/5">
       <div className="w-full flex flex-col md:flex-row items-stretch">
         
         {/* Left Column: Stacked Red Title & Drag Prompt */}
@@ -114,7 +123,7 @@ export function SelectGenreSection() {
             onMouseLeave={handleMouseLeave}
             onMouseUp={handleMouseUp}
             onMouseMove={handleMouseMove}
-            className={`flex gap-3 sm:gap-5 overflow-x-auto no-scrollbar scroll-smooth py-2 touch-pan-x ${
+            className={`flex gap-3 sm:gap-5 overflow-x-auto no-scrollbar py-2 overscroll-x-contain ${
               isDragging ? "cursor-grabbing" : "cursor-grab"
             }`}
           >
@@ -122,10 +131,13 @@ export function SelectGenreSection() {
               <Link
                 key={genre.name}
                 href={`/search?genre_query=${encodeURIComponent(genre.query)}`}
+                onClick={(e) => {
+                  if (hasMoved) e.preventDefault();
+                }}
                 draggable={false}
                 className={`flex-shrink-0 w-[135px] sm:w-[180px] md:w-[210px] h-[90px] sm:h-[120px] md:h-[150px] rounded-lg ${genre.bgClass} flex items-center justify-center text-center p-3 sm:p-4 transition-all duration-300 hover:-translate-y-1.5 hover:scale-[1.02] ${genre.glowClass} shadow-lg active:scale-95`}
               >
-                <span className="font-headline font-black text-base sm:text-2xl md:text-3xl tracking-wider text-white uppercase drop-shadow-md">
+                <span className="font-headline font-black text-base sm:text-2xl md:text-3xl tracking-wider text-white uppercase drop-shadow-md pointer-events-none">
                   {genre.name}
                 </span>
               </Link>
@@ -137,4 +149,3 @@ export function SelectGenreSection() {
     </section>
   );
 }
-
